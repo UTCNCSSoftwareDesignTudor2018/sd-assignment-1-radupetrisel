@@ -1,0 +1,87 @@
+package dao;
+
+import static dao.DBDriver.getConnection;
+
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.util.List;
+
+public abstract class UserDAO {
+
+	protected String table;
+
+	/*
+	 * firstName, lastName, address, phoneNumber, email, cnp, dob, password - not
+	 * null phoneNumber - match 0[0-9]+ email - contain '@' cnp - start with either
+	 * 0, 1 or 2, only digis
+	 */
+	public void createUser(String firstName, String lastName, String phoneNumber, String cnp, String address,
+			String email, String password) {
+
+		assert firstName != null : "First name null.\n";
+		assert lastName != null : "Last name null.\n";
+		assert address != null : "Address null.\n";
+		assert phoneNumber.matches("0[0-9]{9}") : "Invalid phone number.\n";
+		assert email.matches("[A-Za-z0-9_\\.-]+@.*") : "Invalid email.\n";
+		assert cnp.matches("[012][0-9]{12}") : "Invalid CNP.\n";
+		assert password != null : "Password null.\n";
+
+		PreparedStatement statement;
+		try {
+
+			statement = getConnection().prepareStatement("INSERT INTO asgn1." + table
+					+ "(firstName, lastName, cnp, phoneNumber, email, address, password) " + "VALUES(?, ?, ?, ?, ?, ?, ?);");
+			statement.setString(1, firstName);
+			statement.setString(2, lastName);
+			statement.setString(3, cnp);
+			statement.setString(4, phoneNumber);
+			statement.setString(5, email);
+			statement.setString(6, address);
+			statement.setString(7, password);
+			statement.executeUpdate();
+
+		} catch (SQLException e) {
+			e.printStackTrace();
+		}
+
+	}
+
+	protected abstract List<? extends User> createUserFromResultSet(ResultSet rs) throws SQLException;
+	
+
+	public void updateUserFieldValue(int courseId, String field, Object value) {
+
+		(new GeneralDAO()).updateFieldValue("asgn1." + table, courseId, field, value);
+
+	}
+
+	public List<? extends User> findUserByFieldValue(String field, Object value) {
+
+		try {
+			return this.createUserFromResultSet((new GeneralDAO()).findByFieldValue("asgn1." + table, field, value));
+		} catch (SQLException e) {
+			e.printStackTrace();
+		}
+
+		return null;
+	}
+
+	public List<? extends User> findUserByFieldValue(List<String> fields, List<Object> values) {
+
+		try {
+			return this.createUserFromResultSet((new GeneralDAO()).findByFieldValue("asgn1." + table, fields, values));
+		} catch (SQLException e) {
+			e.printStackTrace();
+		}
+
+		return null;
+	}
+
+	public void deleteUserByFieldValue(String field, Object value) {
+
+		(new GeneralDAO()).deleteByFieldValue("asgn1." + table, field, value);
+
+	}
+
+}
